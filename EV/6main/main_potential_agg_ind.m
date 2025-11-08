@@ -1,6 +1,9 @@
 %% main_potential_agg.m (使用聚合模型和 _new 函数计算潜力 - 简化注释版)
 % (新增功能: 同时计算并对比“单体求和”潜力)
 % (绘图部分已根据用户要求精简)
+%
+% *** (根据用户要求修改 - 2025/11/07) ***
+% *** 新增: 存储 M x T 格式的个体潜力数据以匹配 ac_ev_simulation_block.m ***
 clc; clear; close all;
 rng(2024);
 
@@ -45,10 +48,15 @@ results = struct(...
     'm3',            zeros(num_evs, 1), ...
     'P_tar',         zeros(1, total_steps), ...
     'P_cu',          zeros(1, total_steps), ...
-    'EV_Up',         zeros(1, total_steps), ... % 聚合模型上调潜力
-    'EV_Down',       zeros(1, total_steps), ... % 聚合模型下调潜力
-    'EV_Up_Individual_Sum',   zeros(1, total_steps), ... % (新增) 单体求和上调潜力
-    'EV_Down_Individual_Sum', zeros(1, total_steps)  ... % (新增) 单体求和下调潜力
+    'EV_Up',         zeros(1, total_steps), ... % 聚合模型上调潜力 (对应 block.m 的 EV_Up)
+    'EV_Down',       zeros(1, total_steps), ... % 聚合模型下调潜力 (对应 block.m 的 EV_Down)
+    'EV_Up_Individual_Sum',   zeros(1, total_steps), ... % (原有) 单体求和上调潜力
+    'EV_Down_Individual_Sum', zeros(1, total_steps),  ... % (原有) 单体求和下调潜力
+    ...
+    ... % *** 新增字段以匹配 ac_ev_simulation_block.m (M x T 格式) ***
+    'SOC_EV',             zeros(num_evs, total_steps), ... % (M x T) 
+    'EV_Up_Individual',   zeros(num_evs, total_steps), ... % (M x T)
+    'EV_Down_Individual', zeros(num_evs, total_steps)  ... % (M x T)
     );
 
 %% 初始化EV参数 (向量化)
@@ -258,6 +266,7 @@ for long_idx = 1:num_long_steps
         end
 
         %% 记录结果
+        % --- 原有字段 ---
         results.EV_S_original(:, step_idx) = temp_S_original;
         results.EV_S_mod(:, step_idx) = temp_S_mod;
         results.m3 = temp_m3; % 可能只需要最后的值
@@ -267,13 +276,24 @@ for long_idx = 1:num_long_steps
         results.P_agg(step_idx) = sum(temp_P_current);
         results.P_cu(step_idx) = temp_P_current(10); % 第10辆车的功率
 
-        % 记录聚合潜力 (聚合模型)
+        % 记录聚合潜力 (聚合模型) -> 这个对应 ac_ev_simulation_block.m 的 EV_Up/EV_Down
         results.EV_Up(step_idx)   = agg_DeltaP_plus;
         results.EV_Down(step_idx) = agg_DeltaP_minus;
         
-        % (新增) 记录单体求和潜力
+        % (原有) 记录单体求和潜力
         results.EV_Up_Individual_Sum(step_idx)   = individual_sum_DeltaP_plus;
         results.EV_Down_Individual_Sum(step_idx) = individual_sum_DeltaP_minus;
+        
+        % *** 新增：记录 ac_ev_simulation_block.m 格式的字段 ***
+        % 1. (M x T) 个体上调潜力
+        results.EV_Up_Individual(:, step_idx) = temp_delta_p_plus_individual;
+        % 2. (M x T) 个体下调潜力
+        results.EV_Down_Individual(:, step_idx) = temp_delta_p_minus_individual;
+        % 3. (M x T) SOC_EV (使用 S_original 作为副本)
+        results.SOC_EV(:, step_idx) = temp_S_original;
+        % m3 字段已在上面被覆盖/更新
+        % EV_Up 和 EV_Down 字段(聚合潜力)已在上面被覆盖/更新
+        % *** 新增结束 ***
 
     end % 结束 short_idx
 
@@ -285,7 +305,7 @@ end % 结束 long_idx
 results.P_tar = repelem(P_tar, num_short_per_long);
 
 %% 结果保存与可视化
-outputFileName = 'main_potential_agg_vs_individual_sum_results.mat'; % 修改了文件名
+outputFileName = 'main_potential_agg_vs_individual_sum_results.mat'; % (文件名保持不变，但内容已更新)
 fprintf('\n正在保存结果到 %s ...\n', outputFileName);
 try
     save(outputFileName, 'results', '-v7.3');
@@ -296,11 +316,14 @@ end
 
 % (修改) 仅保留潜力对比可视化
 figure;
-plot(time_points_absolute, results.EV_Up, 'r-', 'LineWidth', 1.5, 'DisplayName', '聚合模型 上调潜力');
+plot(time_points_absolute, results.EV_Up, 'r-', 'LineWidth', 1.5, 'DisplayName', '聚合模型 上调潜力 (results.EV_Up)');
 hold on;
-plot(time_points_absolute, results.EV_Down, 'b-', 'LineWidth', 1.5, 'DisplayName', '聚合模型 下调潜力');
-plot(time_points_absolute, results.EV_Up_Individual_Sum, 'r--', 'LineWidth', 1.5, 'DisplayName', '单体求和 上调潜力');
-plot(time_points_absolute, results.EV_Down_Individual_Sum, 'b--', 'LineWidth', 1.5, 'DisplayName', '单体求和 下调潜力');
+plot(time_points_absolute, results.EV_Down, 'b-', 'LineWidth', 1.5, 'DisplayName', '聚合模型 下调潜力 (results.EV_Down)');
+plot(time_points_absolute, results.EV_Up_Individual_Sum, 'r--', 'LineWidth', 1.5, 'DisplayName', '单体求和 上调潜力 (results.EV_Up_Individual_Sum)');
+plot(time_points_absolute, results.EV_Down_Individual_Sum, 'b--', 'LineWidth', 1.5, 'DisplayName', '单体求和 下调潜力 (results.EV_Down_Individual_Sum)');
+% (新增) 绘制新添加的 M x T 个体潜力矩阵的 *总和*，用于验证
+plot(time_points_absolute, sum(results.EV_Up_Individual, 1), 'c:', 'LineWidth', 2, 'DisplayName', '新增(M x T)个体上调之和 (sum(results.EV_Up_Individual))');
+plot(time_points_absolute, sum(results.EV_Down_Individual, 1), 'm:', 'LineWidth', 2, 'DisplayName', '新增(M x T)个体下调之和 (sum(results.EV_Down_Individual))');
 xlabel('Time (hours)');
 ylabel('Potential (kW)');
 title('EV 调节潜力对比: 聚合模型 vs 单体求和');
