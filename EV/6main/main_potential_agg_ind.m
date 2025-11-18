@@ -8,15 +8,17 @@ clc; clear; close all;
 rng(2024);
 
 %% 初始化参数
-excelFile = 'resi2_1000.xlsx';
+excelFile = 'mixed_area.xlsx';
 if ~exist(excelFile, 'file')
     generateEVParameters_real(excelFile, 1000, 1.0);
     fprintf('已生成参数模板: %s\n', excelFile);
 end
-[EVs, t_sim, dt_short, dt_long, P_tar] = initializeFromExcel(excelFile);
+[EVs, t_sim, ~, ~, P_tar] = initializeFromExcel(excelFile);
 fprintf('成功加载%d辆EV数据\n', length(EVs));
 
 %% 时间参数定义
+dt_short = 15;     % 短时间步长 (分钟)
+dt_long = 60;       % 长时间步长 (分钟)
 simulation_start_hour = 6;
 simulation_end_hour   = 30;
 dt = dt_short / 60;       % 短步长 (小时)
