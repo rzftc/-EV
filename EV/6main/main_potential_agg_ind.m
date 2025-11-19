@@ -1,9 +1,6 @@
 %% main_potential_agg.m (使用聚合模型和 _new 函数计算潜力 - 简化注释版)
 % (新增功能: 同时计算并对比“单体求和”潜力)
-% (绘图部分已根据用户要求精简)
-%
-% *** (根据用户要求修改 - 2025/11/07) ***
-% *** 新增: 存储 M x T 格式的个体潜力数据以匹配 ac_ev_simulation_block.m ***
+
 clc; clear; close all;
 rng(2024);
 
@@ -15,7 +12,7 @@ if ~exist(excelFile, 'file')
 end
 [EVs, t_sim, ~, ~, P_tar] = initializeFromExcel(excelFile);
 fprintf('成功加载%d辆EV数据\n', length(EVs));
-
+    
 %% 时间参数定义
 dt_short = 3;     % 短时间步长 (分钟)
 dt_long = 30;       % 长时间步长 (分钟)
