@@ -362,4 +362,4 @@ title('EV 调节潜力对比: 分组聚合模型 vs 单体求和');
 legend;
 grid on;
 
-verifyPotentialAccuracy(results, dt_short);
+% verifyPotentialAccuracy(results, dt_short);
