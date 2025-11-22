@@ -79,42 +79,42 @@ grid on;
 legend('Location', 'northeast', 'FontSize', 12);
 
 
-%% --------------------------------------------------
-% 图 2: Lambda 与 聚合SOC 协同分析 (复现 image_b68bba.png)
-% --------------------------------------------------
-fprintf('正在绘制图 2 (聚合SOC vs Lambda)...\n');
-fig2 = figure('Name', 'Lambda与聚合SOC协同', 'Position', [150 150 1000 400], 'NumberTitle', 'off');
-
-% 左侧坐标轴（聚合SOC）
-yyaxis left;
-main_soc_agg = plot(time_hours, results.S_agg, ...
-    'LineWidth', 1.2, ...
-    'Color', [0.1 0.5 0.2], ...
-    'DisplayName', '聚合SOC');
-ylabel('聚合SOC (-1~1)', 'FontSize', 16, 'Color', [0.1 0.5 0.2]);
-ylim([-2,2]);
-set(gca, 'YColor', [0.1 0.5 0.2]);
-
-% 右侧坐标轴（Lambda）
-yyaxis right;
-main_lambda_agg = plot(time_hours, results.lambda, ...
-    'LineWidth', 1.2, ...
-    'Color', [0.2 0.4 0.8], ...
-    'DisplayName', '\lambda^*');
-ylabel('\lambda^*', 'FontSize', 16, 'Color', [0.2 0.4 0.8]);
-% 动态设置Y轴范围
-lambda_min = floor(min(results.lambda) * 2) / 2;
-lambda_max = ceil(max(results.lambda) * 2) / 2;
-ylim([-2, 2]);
-set(gca, 'YColor', [0.2 0.4 0.8]);
-
-% 公共设置
-xlabel('时间 (小时)', 'FontSize', 14);
-set(gca, 'FontSize', 12);
-xlim([simulation_start_hour, simulation_start_hour + 24]); % [6, 30]
-set(gca, 'XTick', x_ticks, 'XTickLabel', x_tick_labels);
-grid on;
-legend([main_soc_agg, main_lambda_agg], 'Location', 'best', 'FontSize', 12);
+% %% --------------------------------------------------
+% % 图 2: Lambda 与 聚合SOC 协同分析 (复现 image_b68bba.png)
+% % --------------------------------------------------
+% fprintf('正在绘制图 2 (聚合SOC vs Lambda)...\n');
+% fig2 = figure('Name', 'Lambda与聚合SOC协同', 'Position', [150 150 1000 400], 'NumberTitle', 'off');
+% 
+% % 左侧坐标轴（聚合SOC）
+% yyaxis left;
+% main_soc_agg = plot(time_hours, results.S_agg, ...
+%     'LineWidth', 1.2, ...
+%     'Color', [0.1 0.5 0.2], ...
+%     'DisplayName', '聚合SOC');
+% ylabel('聚合SOC (-1~1)', 'FontSize', 16, 'Color', [0.1 0.5 0.2]);
+% ylim([-2,2]);
+% set(gca, 'YColor', [0.1 0.5 0.2]);
+% 
+% % 右侧坐标轴（Lambda）
+% yyaxis right;
+% main_lambda_agg = plot(time_hours, results.lambda, ...
+%     'LineWidth', 1.2, ...
+%     'Color', [0.2 0.4 0.8], ...
+%     'DisplayName', '\lambda^*');
+% ylabel('\lambda^*', 'FontSize', 16, 'Color', [0.2 0.4 0.8]);
+% % 动态设置Y轴范围
+% lambda_min = floor(min(results.lambda) * 2) / 2;
+% lambda_max = ceil(max(results.lambda) * 2) / 2;
+% ylim([-2, 2]);
+% set(gca, 'YColor', [0.2 0.4 0.8]);
+% 
+% % 公共设置
+% xlabel('时间 (小时)', 'FontSize', 14);
+% set(gca, 'FontSize', 12);
+% xlim([simulation_start_hour, simulation_start_hour + 24]); % [6, 30]
+% set(gca, 'XTick', x_ticks, 'XTickLabel', x_tick_labels);
+% grid on;
+% legend([main_soc_agg, main_lambda_agg], 'Location', 'best', 'FontSize', 12);
 
 
 %% --------------------------------------------------
