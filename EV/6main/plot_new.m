@@ -34,7 +34,7 @@ fprintf('结果加载完毕。\n');
 % 仿真参数 (必须与 main_potential_agg_ind.m 匹配)
 dt_short = 3; % 默认短步长为 5 分钟
 simulation_start_hour = 6; % 仿真开始时间
-selected_ev = 23; % 选择绘制的EV编号
+selected_ev = 825; % 选择绘制的EV编号
 
 % 计算时间轴 (小时)
 total_steps = length(results.lambda);
@@ -155,6 +155,43 @@ else
     set(gca, 'XTick', x_ticks, 'XTickLabel', x_tick_labels);
     grid on;
     legend([main_soc_ind, main_lambda_ind], 'Location', 'northwest', 'FontSize', 14);
+end
+
+%% --------------------------------------------------
+% 图 4: 单台EV 电量对比 (基线 vs 实际)
+% --------------------------------------------------
+fprintf('正在绘制图 4 (单车电量: 基线 vs 实际)...\n');
+
+if selected_ev > size(results.EV_E_actual, 1)
+    warning('selected_ev (%d) 大于EV总数 (%d)。跳过图 4 绘制。', selected_ev, size(results.EV_E_actual, 1));
+elseif ~isfield(results, 'EV_E_baseline') || ~isfield(results, 'EV_E_actual')
+    warning('结果文件中缺少电量数据 (EV_E_baseline 或 EV_E_actual)。跳过图 4 绘制。');
+else
+    fig4 = figure('Name', sprintf('EV%d-电量对比', selected_ev), 'Position', [250 250 1000 400], 'NumberTitle', 'off');
+
+    % 绘制基线电量
+    plot(time_hours, results.EV_E_baseline(selected_ev, :), ...
+        '--', 'LineWidth', 2, ...
+        'Color', [0.5 0.5 0.5], ...
+        'DisplayName', '基线电量 (Baseline)');
+    hold on;
+
+    % 绘制实际电量
+    plot(time_hours, results.EV_E_actual(selected_ev, :), ...
+        '-', 'LineWidth', 2, ...
+        'Color', [0 0.6 0.8], ...
+        'DisplayName', '实际电量 (Actual)');
+    hold off;
+
+    % 坐标轴和标签设置
+    xlabel('时间 (小时)', 'FontSize', 14);
+    ylabel('电量 (kWh)', 'FontSize', 14);
+    title(sprintf('EV %d 充电电量随时间变化对比', selected_ev), 'FontSize', 14);
+    set(gca, 'FontSize', 12);
+    xlim([simulation_start_hour, simulation_start_hour + 24]); % [6, 30]
+    set(gca, 'XTick', x_ticks, 'XTickLabel', x_tick_labels);
+    grid on;
+    legend('Location', 'best', 'FontSize', 12);
 end
 
 fprintf('所有图像绘制完成。\n');
