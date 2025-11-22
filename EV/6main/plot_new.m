@@ -19,12 +19,12 @@ clear;
 close all;
 
 %% 1. 加载数据
-resultsFile = 'main_potential_agg_vs_individual_sum_results.mat';
+resultsFile = 'main_potential_agg_vs_individual_sum_results2.mat';
 fprintf('正在加载结果文件: %s\n', resultsFile);
 
 if ~exist(resultsFile, 'file')
     error(['错误: 未找到结果文件 "%s"\n' ...
-           '请首先运行 "main_potential_agg_ind.m" 生成该文件。'], resultsFile);
+        '请首先运行 "main_potential_agg_ind.m" 生成该文件。'], resultsFile);
 end
 data = load(resultsFile); % 加载 'results' 结构体
 results = data.results;
@@ -32,7 +32,7 @@ fprintf('结果加载完毕。\n');
 
 %% 2. 准备绘图参数
 % 仿真参数 (必须与 main_potential_agg_ind.m 匹配)
-dt_short = 5; % 默认短步长为 5 分钟
+dt_short = 3; % 默认短步长为 5 分钟
 simulation_start_hour = 6; % 仿真开始时间
 selected_ev = 23; % 选择绘制的EV编号
 
@@ -92,7 +92,7 @@ main_soc_agg = plot(time_hours, results.S_agg, ...
     'Color', [0.1 0.5 0.2], ...
     'DisplayName', '聚合SOC');
 ylabel('聚合SOC (-1~1)', 'FontSize', 16, 'Color', [0.1 0.5 0.2]);
-ylim([-1.1 1.1]);
+ylim([-2,2]);
 set(gca, 'YColor', [0.1 0.5 0.2]);
 
 % 右侧坐标轴（Lambda）
@@ -105,7 +105,7 @@ ylabel('\lambda^*', 'FontSize', 16, 'Color', [0.2 0.4 0.8]);
 % 动态设置Y轴范围
 lambda_min = floor(min(results.lambda) * 2) / 2;
 lambda_max = ceil(max(results.lambda) * 2) / 2;
-ylim([lambda_min, lambda_max]);
+ylim([-2, 2]);
 set(gca, 'YColor', [0.2 0.4 0.8]);
 
 % 公共设置
@@ -126,7 +126,7 @@ if selected_ev > size(results.EV_S_original, 1)
     warning('selected_ev (%d) 大于EV总数 (%d)。跳过图 3 绘制。', selected_ev, size(results.EV_S_original, 1));
 else
     fig3 = figure('Name', sprintf('EV%d-Lambda&SOC协同', selected_ev), 'Position', [200 200 1000 400], 'NumberTitle', 'off');
-    
+
     % 左侧坐标轴（SOC）
     yyaxis left;
     main_soc_ind = plot(time_hours, results.EV_S_original(selected_ev, :), ...
@@ -134,9 +134,9 @@ else
         'Color', [0.8 0.2 0.2], ...
         'DisplayName', 'SOC原始值');
     ylabel('SOC (-1~1)', 'FontSize', 16, 'Color', [0.8 0.2 0.2]);
-    ylim([-1.1 1.1]);
+    ylim([-2 ,2]);
     set(gca, 'YColor', [0.8 0.2 0.2]);
-    
+
     % 右侧坐标轴（Lambda）
     yyaxis right;
     main_lambda_ind = plot(time_hours, results.lambda, ...
@@ -145,9 +145,9 @@ else
         'DisplayName', '\lambda^*');
     ylabel('\lambda^*', 'FontSize', 16, 'Color', [0.2 0.4 0.8]);
     % 使用与图2相同的动态Y轴范围
-    ylim([lambda_min, lambda_max]);
+    ylim([-2 ,2]);
     set(gca, 'YColor', [0.2 0.4 0.8]);
-    
+
     % 公共设置
     xlabel('时间 (小时)', 'FontSize', 16);
     set(gca, 'FontSize', 12);
