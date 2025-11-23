@@ -23,7 +23,7 @@ close all;
 incentive_prices = linspace(0, 50, 10); 
 
 % 仿真参数 (必须与 main 程序匹配)
-dt_short = 3; % 默认短步长为 3 分钟
+dt_short = 5; % 默认短步长为 3 分钟
 simulation_start_hour = 6; % 仿真开始时间
 selected_ev = 825; % 选择绘制的EV编号 (用于后续单体分析)
 

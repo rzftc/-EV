@@ -32,7 +32,7 @@ for sim_idx = 1:length(incentive_prices)
     fprintf('成功加载%d辆EV数据\n', length(EVs));
 
     %% 时间参数定义
-    dt_short = 3;     % 短时间步长 (分钟)
+    dt_short = 5;     % 短时间步长 (分钟)
     dt_long = 30;       % 长时间步长 (分钟)
     simulation_start_hour = 6;
     simulation_end_hour   = 30;
