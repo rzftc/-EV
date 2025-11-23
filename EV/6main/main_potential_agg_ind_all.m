@@ -6,7 +6,7 @@ clc; clear; close all;
 rng(2024);
 
 %% 初始化参数
-excelFile = 'resi_inc_2000.xlsx';
+excelFile = 'work_inc_2000.xlsx';
 if ~exist(excelFile, 'file')
     generateEVParameters_real(excelFile, 1000, 1.0);
     fprintf('已生成参数模板: %s\n', excelFile);
@@ -15,7 +15,7 @@ end
 fprintf('成功加载%d辆EV数据\n', length(EVs));
     
 %% 时间参数定义
-dt_short = 3;     % 短时间步长 (分钟)
+dt_short = 5;     % 短时间步长 (分钟)
 dt_long = 30;       % 长时间步长 (分钟)
 simulation_start_hour = 6;
 simulation_end_hour   = 30;

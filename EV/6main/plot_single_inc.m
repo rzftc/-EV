@@ -33,7 +33,7 @@ fprintf('结果加载完毕。\n');
 
 %% 2. 准备绘图参数
 % 仿真参数 (必须与 main_potential_agg_ind.m 匹配)
-dt_short = 3; % 默认短步长为 3 分钟
+dt_short = 5; % 默认短步长为 3 分钟
 simulation_start_hour = 6; % 仿真开始时间
 selected_ev = 825; % 选择绘制的EV编号
 
@@ -233,7 +233,7 @@ else
     % plot(time_hours, P_lower_bound, '--', 'LineWidth', 1.5, 'Color', [0.2 0.2 0.8], 'DisplayName', '调节下界 (Lower Bound)');
     
     % 绘制基线功率
-    plot(time_hours, results.P_base_agg, 'k:', 'LineWidth', 1.5, 'DisplayName', '基线功率 (Baseline)');
+    % plot(time_hours, results.P_base_agg, 'k:', 'LineWidth', 1.5, 'DisplayName', '基线功率 (Baseline)');
     
     % 绘制实际聚合功率
     plot(time_hours, results.P_agg, '-', 'LineWidth', 1.5, 'Color', [0.1 0.6 0.3], 'DisplayName', '实际功率 (Actual)');
@@ -253,7 +253,7 @@ else
     print(fig6, '聚合调节边界.png', '-dpng', '-r600');
 end
 
-dt_short = 3;     % 短时间步长 (分钟)
+dt_short = 5;     % 短时间步长 (分钟)
 dt_long = 30;       % 长时间步长 (分钟)
 simulation_start_hour = 6;
 simulation_end_hour   = 30;
