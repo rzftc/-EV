@@ -351,3 +351,18 @@ catch ME_save
     fprintf('*** 保存结果文件时出错: %s ***\n', ME_save.message);
 end
 
+% (修改) 仅保留潜力对比可视化
+figure;
+plot(time_points_absolute, results.EV_Up, 'r-', 'LineWidth', 1.5, 'DisplayName', '聚合模型 上调潜力 (results.EV_Up)');
+hold on;
+plot(time_points_absolute, results.EV_Down, 'b-', 'LineWidth', 1.5, 'DisplayName', '聚合模型 下调潜力 (results.EV_Down)');
+plot(time_points_absolute, results.EV_Up_Individual_Sum, 'r--', 'LineWidth', 1.5, 'DisplayName', '单体求和 上调潜力 (results.EV_Up_Individual_Sum)');
+plot(time_points_absolute, results.EV_Down_Individual_Sum, 'b--', 'LineWidth', 1.5, 'DisplayName', '单体求和 下调潜力 (results.EV_Down_Individual_Sum)');
+% (新增) 绘制新添加的 M x T 个体潜力矩阵的 *总和*，用于验证
+
+xlabel('Time (hours)');
+ylabel('Potential (kW)');
+title('EV 调节潜力对比: 聚合模型 vs 单体求和');
+legend;
+grid on;
+
