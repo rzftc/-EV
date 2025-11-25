@@ -69,9 +69,9 @@ function [EV_Up_Sum, EV_Down_Sum, EV_Power_Sum] = run_EV_simulation(P_grid_comma
         EVs(i).E_tar_original = EVs(i).E_tar_set;
         EVs(i).SOC_original = 0;
         if EVs(i).ptcp
-            EVs(i).E_reg_min = max(EVs(i).E_in, EVs(i).E_tar_original - deltaE_down_vec(i));
+            EVs(i).E_reg_min = max(EVs(i).E_ini, EVs(i).E_tar_original - deltaE_down_vec(i));
             EVs(i).E_reg_max = min(EVs(i).C, EVs(i).E_tar_original + deltaE_up_vec(i));
-            EVs(i).E_tar_set = rand(EVs(i).E_reg_min,EVs(i).E_reg_max);
+            EVs(i).E_tar_set = EVs(i).E_reg_min + (EVs(i).E_reg_max - EVs(i).E_reg_min) * rand();
         else
             EVs(i).E_reg_min = EVs(i).E_tar_original;
             EVs(i).E_reg_max = EVs(i).E_tar_original;
