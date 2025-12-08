@@ -1,4 +1,4 @@
-
+%% plot_single_inc.m
 clc;
 clear;
 close all;
@@ -76,6 +76,48 @@ if exist('results', 'var')
     print(fig1, '功率跟踪效果分析.png', '-dpng', '-r600');
 end
 
+%% --------------------------------------------------
+% [新增] 图 2: 聚合模型实时功率与实际统计功率对比
+% 保存为: 聚合功率计算验证.png
+% --------------------------------------------------
+if exist('results', 'var') && isfield(results, 'EV_Power')
+    fprintf('正在绘制图 2 (聚合功率计算验证: P_agg vs EV_Power)...\n');
+    fig2 = figure('Name', '聚合功率计算验证', 'Position', [150 150 1000 400], 'NumberTitle', 'off');
+
+    hold on;
+    
+    % 绘制 P_agg (实际统计值，作为基准，黑色实线)
+    plot(time_hours, results.P_agg, ...
+        'LineWidth', 2.5, ...
+        'Color', 'k', ... 
+        'DisplayName', '实际统计功率 (P_{agg})');
+
+    % 绘制 EV_Power (聚合模型计算值，红色虚线)
+    plot(time_hours, results.EV_Power, ...
+        'LineStyle', '--', ...
+        'LineWidth', 2.0, ...
+        'Color', 'r', ... 
+        'DisplayName', '聚合模型功率 (EV_{Power})');
+    
+    hold off;
+
+    % 坐标轴和标签设置
+    xlabel('时间 (小时)', 'FontSize', 14);
+    ylabel('功率 (kW)', 'FontSize', 14);
+    set(gca, 'FontSize', 12);
+    xlim([simulation_start_hour, simulation_start_hour + 24]); 
+    set(gca, 'XTick', x_ticks, 'XTickLabel', x_tick_labels);
+    grid on;
+    legend('Location', 'best', 'FontSize', 12);
+    title('聚合模型实时功率与实际统计功率一致性验证');
+
+    % 保存图像
+    print(fig2, '聚合功率计算验证.png', '-dpng', '-r600');
+else
+    if exist('results', 'var')
+        warning('results 结构体中缺少 EV_Power 字段，跳过图 2 绘制。请检查是否运行了包含该字段保存逻辑的最新 main 文件。');
+    end
+end
 
 %% --------------------------------------------------
 % 图 3: Lambda 与 单台EV SOC 协同分析

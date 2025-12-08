@@ -1,6 +1,6 @@
 %% main_potential_agg_ind.m
 % (新增功能: 同时计算并对比“单体求和”潜力 - 包含分组聚合改进)
-% (本次修改: 增加单体基线电量、实际电量、入离网时间分布、聚合基线功率的记录，用于论文算例验证)
+% (本次修改: 增加聚合模型计算的实时功率 results.EV_Power，用于验证)
 
 clc; clear; close all;
 rng(2024);
@@ -50,6 +50,7 @@ results = struct(...
     'P_cu',          zeros(1, total_steps), ...
     'EV_Up',         zeros(1, total_steps), ... % 聚合模型上调潜力
     'EV_Down',       zeros(1, total_steps), ... % 聚合模型下调潜力
+    'EV_Power',      zeros(1, total_steps), ... % [新增] 聚合模型实时功率
     'EV_Up_Individual_Sum',   zeros(1, total_steps), ... % 单体求和上调潜力
     'EV_Down_Individual_Sum', zeros(1, total_steps),  ... % 单体求和下调潜力
     ...
@@ -278,6 +279,7 @@ for long_idx = 1:num_long_steps
 
         agg_DeltaP_plus = 0;
         agg_DeltaP_minus = 0;
+        agg_P_real = 0; % [新增] 聚合模型实时功率
 
         if ~isempty(active_participating_indices)
             all_t_dep_h = [EVs(active_participating_indices).t_dep] / 60;
@@ -309,6 +311,10 @@ for long_idx = 1:num_long_steps
                     
                     agg_DeltaP_plus = agg_DeltaP_plus + d_plus;
                     agg_DeltaP_minus = agg_DeltaP_minus + d_minus;
+                    
+                    % [新增] 计算该分组的实时功率求和，并累加到聚合模型实时功率
+                    p_real_agg = sum([group_EVs.P_current]);
+                    agg_P_real = agg_P_real + p_real_agg;
                 end
             end
         end
@@ -325,6 +331,7 @@ for long_idx = 1:num_long_steps
 
         results.EV_Up(step_idx)   = agg_DeltaP_plus;
         results.EV_Down(step_idx) = agg_DeltaP_minus;
+        results.EV_Power(step_idx)= agg_P_real; % [新增] 记录聚合模型实时功率
         
         results.EV_Up_Individual_Sum(step_idx)   = individual_sum_DeltaP_plus;
         results.EV_Down_Individual_Sum(step_idx) = individual_sum_DeltaP_minus;
@@ -368,4 +375,4 @@ end
 % title('EV 调节潜力对比: 聚合模型 vs 单体求和');
 % legend;
 % grid on;
-% 
+%
