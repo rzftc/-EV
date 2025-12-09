@@ -90,14 +90,14 @@ if exist('results', 'var') && isfield(results, 'EV_Power')
     plot(time_hours, results.P_agg, ...
         'LineWidth', 2.5, ...
         'Color', 'k', ... 
-        'DisplayName', '实际统计功率 (P_{agg})');
+        'DisplayName', '单体功率之和');
 
     % 绘制 EV_Power (聚合模型计算值，红色虚线)
     plot(time_hours, results.EV_Power, ...
         'LineStyle', '--', ...
         'LineWidth', 2.0, ...
         'Color', 'r', ... 
-        'DisplayName', '聚合模型功率 (EV_{Power})');
+        'DisplayName', '聚合模型功率');
     
     hold off;
 
@@ -109,7 +109,6 @@ if exist('results', 'var') && isfield(results, 'EV_Power')
     set(gca, 'XTick', x_ticks, 'XTickLabel', x_tick_labels);
     grid on;
     legend('Location', 'best', 'FontSize', 12);
-    title('聚合模型实时功率与实际统计功率一致性验证');
 
     % 保存图像
     print(fig2, '聚合功率计算验证.png', '-dpng', '-r600');
