@@ -1,4 +1,3 @@
-
 clc; clear; close all;
 rng(2024);
 
@@ -10,30 +9,28 @@ if ~exist(excelFile, 'file')
 end
 [EVs, t_sim, ~, ~, P_tar] = initializeFromExcel(excelFile);
 fprintf('成功加载%d个DER1数据\n', length(EVs));
-    
-%% 时间参数定义
-dt_short = 5;     % 短时间步长 (分钟)
-dt_long = 60;       % 长时间步长 (分钟)
+
+%% 时间参数
+dt_short = 5;
+dt_long = 60;
 simulation_start_hour = 6;
 simulation_end_hour   = 30;
-dt = dt_short / 60;       % 短步长 (小时)
-dt_minutes = dt_short;    % 短步长 (分钟)
-dt_long_minutes = dt_long;% 长步长 (分钟)
-t_adj = 5 / 60;     % 调节时长 (小时)
-% P_tar=zeros(1,24);
-% 时间轴 (小时)
+dt = dt_short / 60;
+dt_minutes = dt_short;
+dt_long_minutes = dt_long;
+t_adj = 5 / 60;
 time_points_absolute = simulation_start_hour : dt : (simulation_start_hour + t_sim/60 - dt);
 num_time_points = length(time_points_absolute);
 fprintf('仿真时间范围: %.2f 小时 到 %.2f 小时, 步长: %.3f 小时 (%d 点)\n', ...
     time_points_absolute(1), time_points_absolute(end), dt, num_time_points);
 
-%% 索引预处理
+%% 索引
 num_long_steps = t_sim / dt_long;
 num_short_per_long = dt_long / dt_short;
 total_steps = num_long_steps * num_short_per_long;
 assert(mod(num_long_steps, 24*(60/dt_long)) == 0, '长时间步数必须是24小时对应步数的整数倍');
 
-%% 创建结果存储结构
+%% 结果结构
 num_evs = length(EVs);
 results = struct(...
     'P_agg',         zeros(1, total_steps), ...
@@ -45,23 +42,23 @@ results = struct(...
     'm3',            zeros(num_evs, 1), ...
     'P_tar',         zeros(1, total_steps), ...
     'P_cu',          zeros(1, total_steps), ...
-    'EV_Up',         zeros(1, total_steps), ... % 聚合模型上调潜力
-    'EV_Down',       zeros(1, total_steps), ... % 聚合模型下调潜力
-    'EV_Up_Individual_Sum',   zeros(1, total_steps), ... % 单体求和上调潜力
-    'EV_Down_Individual_Sum', zeros(1, total_steps),  ... % 单体求和下调潜力
+    'EV_Up',         zeros(1, total_steps), ...
+    'EV_Down',       zeros(1, total_steps), ...
+    'EV_Up_Individual_Sum',   zeros(1, total_steps), ...
+    'EV_Down_Individual_Sum', zeros(1, total_steps),  ...
     ...
-    'SOC_EV',             zeros(num_evs, total_steps), ... 
-    'EV_Up_Individual',   zeros(num_evs, total_steps), ... 
+    'SOC_EV',             zeros(num_evs, total_steps), ...
+    'EV_Up_Individual',   zeros(num_evs, total_steps), ...
     'EV_Down_Individual', zeros(num_evs, total_steps), ...
     ...
-    'EV_E_actual',        zeros(num_evs, total_steps), ... % [新增] 实际电量轨迹
-    'EV_E_baseline',      zeros(num_evs, total_steps), ... % [新增] 基线电量轨迹
-    'P_base_agg',         zeros(1, total_steps), ...       % [新增] 聚合基线功率
-    'EV_t_in',            zeros(num_evs, 1), ...           % [新增] 入网时间分布
-    'EV_t_dep',           zeros(num_evs, 1) ...            % [新增] 离网时间分布
+    'EV_E_actual',        zeros(num_evs, total_steps), ...
+    'EV_E_baseline',      zeros(num_evs, total_steps), ...
+    'P_base_agg',         zeros(1, total_steps), ...
+    'EV_t_in',            zeros(num_evs, 1), ...
+    'EV_t_dep',           zeros(num_evs, 1) ...
     );
 
-%% 初始化EV参数 (向量化)
+%% 向量化初始化
 p_real_vec = [EVs.p_real]';
 P_h_max_vec = [EVs.P_h_max]';
 P_0_vec = [EVs.P_0]';
@@ -97,7 +94,6 @@ if ~isempty(participating_indices)
     E_reg_max_vec(participating_indices) = min(E_reg_max_vec(participating_indices), C_vec(participating_indices));
 end
 
-% 写回EVs结构体
 E_tar_orig_cell = num2cell(E_tar_original_vec);
 SOC_orig_cell = num2cell(SOC_original_vec);
 ptcp_cell = num2cell(ptcp_vec);
@@ -109,7 +105,6 @@ E_reg_max_cell = num2cell(E_reg_max_vec);
 [EVs.E_reg_min] = E_reg_min_cell{:};
 [EVs.E_reg_max] = E_reg_max_cell{:};
 
-% 初始化 E_tar, tau_rem, E_exp, E_actual, E_current, P_current
 E_tar_vec = max(E_tar_set_vec, E_ini_vec);
 t_ch_vec = zeros(num_evs, 1);
 valid_PN_mask = P_N_vec > 0;
@@ -129,7 +124,7 @@ E_ini_cell = num2cell(E_ini_vec);
 P_current_init_cell = num2cell(zeros(num_evs, 1));
 [EVs.P_current] = P_current_init_cell{:};
 
-%% 初始化聚合SOC 和 基线功率
+%% 初始聚合SOC与基线
 S_agg_current = mean([EVs.SOC_original]);
 
 fprintf('正在预计算所有DER1的基线功率序列...\n');
@@ -151,38 +146,29 @@ end
 clear EVs_for_baseline;
 fprintf('基线功率序列计算完成。\n');
 
-% [新增] 计算所有EV的基线能量轨迹 和 聚合基线功率
 fprintf('正在计算基线能量轨迹与聚合基线功率...\n');
 temp_P_base_agg = zeros(1, total_steps);
 for i = 1:num_evs
-    % 1. 累加聚合基线功率
-    % 确保 P_base_sequence 是行向量 (1 x total_steps)
     p_base_seq = EVs(i).P_base_sequence;
     if size(p_base_seq, 1) > 1
-        p_base_seq = p_base_seq'; 
+        p_base_seq = p_base_seq';
     end
     temp_P_base_agg = temp_P_base_agg + p_base_seq;
-
-    % 2. 计算单体基线能量轨迹
-    % 积分: E(t) = E_ini + cumsum(P_base * eta * dt)
     delta_E = p_base_seq * EVs(i).eta * (dt_short / 60);
     results.EV_E_baseline(i, :) = EVs(i).E_ini + cumsum(delta_E);
 end
-results.P_base_agg = temp_P_base_agg; % 保存聚合基线功率
-results.EV_t_in = [EVs.t_in]';       % 保存入网时间
-results.EV_t_dep = [EVs.t_dep]';     % 保存离网时间
+results.P_base_agg = temp_P_base_agg;
+results.EV_t_in = [EVs.t_in]';
+results.EV_t_dep = [EVs.t_dep]';
 fprintf('基线数据计算完成。\n');
 
-
-%% 外层循环（长时间步长）
+%% 外层长时间步
 for long_idx = 1:num_long_steps
     t_long_start_minute = (long_idx - 1) * dt_long_minutes;
 
-    %% 长时间步处理
     [lambda_star] = aggregateEVs(EVs, P_tar(long_idx));
     [~, S_agg_next] = calculateVirtualSOC_agg(EVs, dt_long_minutes);
 
-    %% 内层循环（短时间步长）
     for short_idx = 1:num_short_per_long
         step_idx = (long_idx - 1) * num_short_per_long + short_idx;
         t_current_minute = t_long_start_minute + (short_idx - 1) * dt_minutes;
@@ -192,13 +178,10 @@ for long_idx = 1:num_long_steps
         temp_S_original = zeros(num_evs, 1);
         temp_S_mod = zeros(num_evs, 1);
         temp_P_current = zeros(num_evs, 1);
-        temp_E_current = zeros(num_evs, 1); % [新增] 临时存储当前实际电量
-        
-        % (新增) 为单体求和潜力创建临时存储
+        temp_E_current = zeros(num_evs, 1);
         temp_delta_p_plus_individual = zeros(num_evs, 1);
         temp_delta_p_minus_individual = zeros(num_evs, 1);
 
-        %% 更新EV状态 (并行处理)
         EVs_in_parfor = EVs;
 
         parfor i = 1:num_evs
@@ -234,38 +217,33 @@ for long_idx = 1:num_long_steps
             temp_S_original(i) = EV.S_original;
             temp_S_mod(i) = EV.S_modified;
             temp_P_current(i) = EV.P_current;
-            temp_E_current(i) = EV.E_actual; % [新增] 记录实际电量
-            
-            % (新增) 计算单体调节潜力
-            is_online_h = (current_absolute_hour >= (EV.t_in / 60)) && (current_absolute_hour < (EV.t_dep / 60)); % 判断是否在线 (小时)
-            
-            if EV.ptcp && is_online_h % 只有参与且在线的 EV 才有潜力
-                 P_base_i = EV.P_base_sequence(step_idx); % 获取当前短步的基线功率
-                 t_dep_h = EV.t_dep / 60; % 离网时间 (小时)
+            temp_E_current(i) = EV.E_actual;
+
+            is_online_h = (current_absolute_hour >= (EV.t_in / 60)) && (current_absolute_hour < (EV.t_dep / 60));
+            if EV.ptcp && is_online_h
+                 P_base_i = EV.P_base_sequence(step_idx);
+                 t_dep_h = EV.t_dep / 60;
 
                  [DeltaP_plus_i, DeltaP_minus_i] = calculateEVAdjustmentPotentia_new(...
-                     EV.E_reg_min, EV.E_reg_max, EV.E_actual, ... % 使用 E_actual 作为当前电量近似
+                     EV.E_reg_min, EV.E_reg_max, EV.E_actual, ...
                      t_dep_h, current_absolute_hour, ...
-                     EV.P_N, P_base_i, EV.eta, t_adj); % 使用小时单位
-                 
+                     EV.P_N, P_base_i, EV.eta, t_adj);
+
                  temp_delta_p_plus_individual(i) = DeltaP_plus_i;
                  temp_delta_p_minus_individual(i) = DeltaP_minus_i;
             else
-                 % 未参与或不在线的EV，单体潜力为0
                  temp_delta_p_plus_individual(i) = 0;
                  temp_delta_p_minus_individual(i) = 0;
             end
 
             EVs_in_parfor(i) = EV;
-        end % 结束 parfor i
+        end
 
-        EVs = EVs_in_parfor; % 更新主 EVs 数组
-        
-        % (新增) 累加单体潜力
+        EVs = EVs_in_parfor;
+
         individual_sum_DeltaP_plus = sum(temp_delta_p_plus_individual);
         individual_sum_DeltaP_minus = sum(temp_delta_p_minus_individual);
 
-        %% (修改) 计算聚合潜力 (聚合模型) - 改进版：分组聚合
         active_participating_indices = find(arrayfun(@(ev, t_abs_h) ...
             ev.ptcp && (t_abs_h >= (ev.t_in / 60)) && (t_abs_h < (ev.t_dep / 60)), ...
             EVs, repmat(current_absolute_hour, num_evs, 1)));
@@ -276,70 +254,56 @@ for long_idx = 1:num_long_steps
         if ~isempty(active_participating_indices)
             all_t_dep_h = [EVs(active_participating_indices).t_dep] / 60;
             t_rem_all = all_t_dep_h - current_absolute_hour;
-            
-            group_edges = [0, 1, 2, 4, 100]; 
-            
+            group_edges = [0, 1, 2, 4, 100];
+
             for g = 1:length(group_edges)-1
                 group_mask = (t_rem_all >= group_edges(g)) & (t_rem_all < group_edges(g+1));
                 group_indices = active_participating_indices(group_mask);
-                
+
                 if ~isempty(group_indices)
                     group_EVs = EVs(group_indices);
-                    
                     E_reg_min_agg = sum([group_EVs.E_reg_min]);
                     E_reg_max_agg = sum([group_EVs.E_reg_max]);
-                    E_current_agg = sum([group_EVs.E_actual]); 
-                    
-                    t_dep_agg_h = mean([group_EVs.t_dep]) / 60; 
-                    
-                    p_on_agg = sum([group_EVs.P_N]);           
-                    P_base_agg = sum(arrayfun(@(ev) ev.P_base_sequence(step_idx), group_EVs)); 
-                    eta_agg = mean([group_EVs.eta]);           
-        
+                    E_current_agg = sum([group_EVs.E_actual]);
+                    t_dep_agg_h = mean([group_EVs.t_dep]) / 60;
+                    p_on_agg = sum([group_EVs.P_N]);
+                    P_base_agg = sum(arrayfun(@(ev) ev.P_base_sequence(step_idx), group_EVs));
+                    eta_agg = mean([group_EVs.eta]);
+
                     [d_plus, d_minus] = calculateEVAdjustmentPotentia_new(...
                         E_reg_min_agg, E_reg_max_agg, E_current_agg, ...
                         t_dep_agg_h, current_absolute_hour, ...
                         p_on_agg, P_base_agg, eta_agg, t_adj);
-                    
+
                     agg_DeltaP_plus = agg_DeltaP_plus + d_plus;
                     agg_DeltaP_minus = agg_DeltaP_minus + d_minus;
                 end
             end
         end
 
-        %% 记录结果
         results.EV_S_original(:, step_idx) = temp_S_original;
         results.EV_S_mod(:, step_idx) = temp_S_mod;
-        results.m3 = temp_m3; 
-
+        results.m3 = temp_m3;
         results.lambda(step_idx) = lambda_star;
         results.S_agg(step_idx) = S_agg_current;
         results.P_agg(step_idx) = sum(temp_P_current);
         results.P_cu(step_idx) = temp_P_current(10);
-
         results.EV_Up(step_idx)   = agg_DeltaP_plus;
         results.EV_Down(step_idx) = agg_DeltaP_minus;
-        
         results.EV_Up_Individual_Sum(step_idx)   = individual_sum_DeltaP_plus;
         results.EV_Down_Individual_Sum(step_idx) = individual_sum_DeltaP_minus;
-        
         results.EV_Up_Individual(:, step_idx) = temp_delta_p_plus_individual;
         results.EV_Down_Individual(:, step_idx) = temp_delta_p_minus_individual;
         results.SOC_EV(:, step_idx) = temp_S_original;
-        
-        results.EV_E_actual(:, step_idx) = temp_E_current; % [新增] 保存当前步的实际电量
+        results.EV_E_actual(:, step_idx) = temp_E_current;
+    end
 
-    end % 结束 short_idx
-
-    %% 更新聚合SOC
     S_agg_current = S_agg_next;
-
-end % 结束 long_idx
+end
 
 results.P_tar = repelem(P_tar, num_short_per_long);
 
-%% 结果保存与可视化
-outputFileName = 'DER1.mat'; 
+outputFileName = 'DER1.mat';
 fprintf('\n正在保存结果到 %s ...\n', outputFileName);
 try
     save(outputFileName, 'results', '-v7.3');
@@ -347,19 +311,3 @@ try
 catch ME_save
     fprintf('*** 保存结果文件时出错: %s ***\n', ME_save.message);
 end
-% 
-% % (修改) 仅保留潜力对比可视化
-% figure;
-% plot(time_points_absolute, results.EV_Up, 'r-', 'LineWidth', 1.5, 'DisplayName', '聚合模型 上调潜力 (results.EV_Up)');
-% hold on;
-% plot(time_points_absolute, results.EV_Down, 'b-', 'LineWidth', 1.5, 'DisplayName', '聚合模型 下调潜力 (results.EV_Down)');
-% plot(time_points_absolute, results.EV_Up_Individual_Sum, 'r--', 'LineWidth', 1.5, 'DisplayName', '单体求和 上调潜力 (results.EV_Up_Individual_Sum)');
-% plot(time_points_absolute, results.EV_Down_Individual_Sum, 'b--', 'LineWidth', 1.5, 'DisplayName', '单体求和 下调潜力 (results.EV_Down_Individual_Sum)');
-% % (新增) 绘制新添加的 M x T 个体潜力矩阵的 *总和*，用于验证
-% 
-% xlabel('Time (hours)');
-% ylabel('Potential (kW)');
-% title('EV 调节潜力对比: 聚合模型 vs 单体求和');
-% legend;
-% grid on;
-% 
